@@ -7,13 +7,14 @@
 import json
 import requests
 
+from Player import Player
+
 class Team(object):
 
     # @type :: FUNC
     # @name :: __init__
     # @description :: Constructor for a team object
     # @param :: self - self representation
-    # @param :: apiID - the id associated with our api
     # @param :: name - the name of the team
     # @param :: city - the city the team is located in
     # @param :: tricode - the tricode for the team
@@ -42,6 +43,9 @@ class Team(object):
         result = self.get_api_id()
         if result != None:
             self.id = result
+
+        print("Getting Players")
+        self.get_players()
 
     # @type :: FUNC
     # @name :: upload
@@ -96,3 +100,23 @@ class Team(object):
             return None
         else:
             return r["id"]
+
+    # @type :: FUNC
+    # @name :: get_players
+    # @param :: self - self representation
+    # @description :: Retrieves and creates player objects for this team
+    # @end
+    def get_players(self):
+        print("API Call")
+        print(self.teamID)
+        r = requests.get('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + self.teamID)
+        r = r.json()
+        print("API Finished")
+        rowSet = r["resultSets"]["rowSet"]
+        playerObjects = []
+        for x in rowSet:
+            headshotURL = "http://stats.nba.com/media/players/230x185/" + x[12] + ".png"
+            player = Player(x[12], x[3], headshotURL, self.name, self.teamID, x[4], x[5], 0, 0, 0, [])
+            print(player.json_dump())
+            player.upload()
+            self.players.append(player.id)
