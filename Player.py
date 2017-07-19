@@ -51,10 +51,13 @@ class Player(object):
         if hasattr(self, "id"):
             self.upload_existing()
         else:
-            self.upload_new()
-            result = self.get_api_id()
-            if result != None:
-                self.id = result
+            # Attempt to get an id
+            val = self.get_api_id()
+            print(val)
+            if val is None:
+                self.id = self.upload_new()
+            else:
+                self.upload_existing()
 
     # @type :: FUNC
     # @name :: json_dump
@@ -72,7 +75,16 @@ class Player(object):
     # @return :: the player ID associated with our db
     # @end
     def upload_new(self):
+        print(self.teamID)
         r = requests.post('https://therender-nba-api.herokuapp.com/player/new', data=self.json_dump())
+        print(r)
+        try:
+            r = r.json()
+            return r["player"]["id"]
+        except ValueError:
+            print("Error extracting the JSON.")
+            print("No JSON was sent.")
+            print(r)
 
     # @type :: FUNC
     # @name :: upload_existing
@@ -90,8 +102,13 @@ class Player(object):
     # supplies the API id
     # @end
     def get_api_id(self):
-        r = requests.get('https://therender-nba-api.herokuapp.com/player/exists/nbaid/' + self.teamID)
-        r = r.json()
+        r = requests.get('https://therender-nba-api.herokuapp.com/player/exists/nbaid/' + str(self.playerID))
+        try:
+            r = r.json()
+        except ValueError:
+            print("Error extracting the JSON.")
+            print("No JSON was sent.")
+            print(r)
         if r["exists"] == False:
             return None
         else:

@@ -31,7 +31,7 @@ class Team(object):
         self.name = name
         self.city = city
         self.tricode = tricode
-        self.players = players
+        self.players = []
         self.logo = logo
         self.teamID = teamID
         self.seasonWins = seasonWins
@@ -46,6 +46,7 @@ class Team(object):
 
         print("Getting Players")
         self.get_players()
+        print(players)
 
     # @type :: FUNC
     # @name :: upload
@@ -109,13 +110,18 @@ class Team(object):
     def get_players(self):
         print("API Call")
         print(self.teamID)
-        r = requests.get('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + self.teamID)
+        print('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + self.teamID)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36'
+        }
+        r = requests.get('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + self.teamID, headers=headers)
         r = r.json()
         print("API Finished")
-        rowSet = r["resultSets"]["rowSet"]
+        rowSet = r["resultSets"][0]["rowSet"]
         playerObjects = []
         for x in rowSet:
-            headshotURL = "http://stats.nba.com/media/players/230x185/" + x[12] + ".png"
+            headshotURL = "http://stats.nba.com/media/players/230x185/" + str(x[12]) + ".png"
+            print(headshotURL)
             player = Player(x[12], x[3], headshotURL, self.name, self.teamID, x[4], x[5], 0, 0, 0, [])
             print(player.json_dump())
             player.upload()
