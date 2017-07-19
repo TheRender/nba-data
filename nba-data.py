@@ -60,6 +60,8 @@ def populate_team_season_record():
 def upload_teams():
     for key, value in teams.iteritems():
         value.upload()
+        value.get_players()
+        value.upload()
 
 if __name__ == '__main__':
     # We going to do some shit here

@@ -82,6 +82,7 @@ class Player(object):
             r = r.json()
             return r["player"]["id"]
         except ValueError:
+            print("1")
             print("Error extracting the JSON.")
             print("No JSON was sent.")
             print(r)

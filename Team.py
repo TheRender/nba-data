@@ -44,10 +44,6 @@ class Team(object):
         if result != None:
             self.id = result
 
-        print("Getting Players")
-        self.get_players()
-        print(players)
-
     # @type :: FUNC
     # @name :: upload
     # @param :: self - self representation
@@ -122,7 +118,7 @@ class Team(object):
         for x in rowSet:
             headshotURL = "http://stats.nba.com/media/players/230x185/" + str(x[12]) + ".png"
             print(headshotURL)
-            player = Player(x[12], x[3], headshotURL, self.name, self.teamID, x[4], x[5], 0, 0, 0, [])
+            player = Player(x[12], x[3], headshotURL, self.name, self.id, x[4], x[5], 0, 0, 0, [])
             print(player.json_dump())
             player.upload()
             self.players.append(player.id)
