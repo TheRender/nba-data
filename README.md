@@ -2,10 +2,10 @@
 Scrape and add data from NBA API's to our internal API's
 
 ## Installation
-We're using Python 3 here...
+We're using Python 2 here... because it just works
 
 ```
-pip3 install --editable .
+pip install --editable .
 ```
 
 ## Usage
