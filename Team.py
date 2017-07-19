@@ -25,7 +25,7 @@ class Team(object):
     # @param :: location - the location that the team is in
     # @param :: logs - an array of log id's in association with our API
     # @end
-    def __init__(self, apiID, name, city, tricode, teamID, players, logo, seasonWins, seasonLosses, location, logs):
+    def __init__(self, name, city, tricode, teamID, players, logo, nickname, seasonWins, seasonLosses, location, logs):
         # self.id = apiID
         self.name = name
         self.city = city
@@ -37,15 +37,24 @@ class Team(object):
         self.seasonLosses = seasonLosses
         self.location = location
         self.logs = logs
+        self.nickname = nickname
         # Try to get an ID
-        if apiID == None:
+        result = self.get_api_id()
+        if result != None:
+            self.id = result
+
+    # @type :: FUNC
+    # @name :: upload
+    # @param :: self - self representation
+    # @description :: Determines and executes whether to upload with our without api id
+    def upload(self):
+        if hasattr(self, "id"):
+            self.upload_existing()
+        else:
+            self.upload_new()
             result = self.get_api_id()
             if result != None:
                 self.id = result
-
-    def upload(self):
-        x = json.dumps(self, default=lambda x: x.__dict__)
-        print(x)
 
     # @type :: FUNC
     # @name :: json_dump
@@ -63,6 +72,7 @@ class Team(object):
     # @end
     def upload_new(self):
         r = requests.post('https://therender-nba-api.herokuapp.com/team/new', data=self.json_dump())
+        print(r)
 
     # @type :: FUNC
     # @name :: upload_existing
@@ -80,14 +90,9 @@ class Team(object):
     # supplies the API id
     # @end
     def get_api_id(self):
-        # r = requests.get('https://nba-api.therendersports.com/team/exists/nbaid/' + self.teamID)
         r = requests.get('https://therender-nba-api.herokuapp.com/team/exists/nbaid/' + self.teamID)
-        # r = requests.get('https://therender-nba-api.herokuapp.com/teams')
         r = r.json()
         if r["exists"] == False:
             return None
         else:
             return r["id"]
-
-x = Team(None, "Test", "Test", "Test", "Test", ["Test"], "http://google.com", 0, 0, "Test", ["Test"])
-# x.upload_new()
