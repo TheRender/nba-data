@@ -25,10 +25,10 @@ class Player(object):
     # @param :: careerAPG - the careerAPG of the player
     # @param :: stats - an array of stats id's in association with our API
     # @end
-    def __init__(self, playerID, name, heashotURL, teamName, teamID, jerseyNumber, position, careerPPG, careerRPG, careerAPG, stats):
+    def __init__(self, playerID, name, headshotURL, teamName, teamID, jerseyNumber, position, careerPPG, careerRPG, careerAPG, stats):
         self.name = name
         self.playerID = playerID
-        self.heashotURL = heashotURL
+        self.headshotURL = headshotURL
         self.teamName = teamName
         self.teamID = teamID
         self.jerseyNumber = jerseyNumber
