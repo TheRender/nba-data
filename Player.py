@@ -37,6 +37,7 @@ class Player(object):
         self.careerRPG = careerRPG
         self.careerAPG = careerAPG
         self.stats = []
+        self.get_career_stats()
         # Try to get an ID
         result = self.get_api_id()
         if result != None:
@@ -114,3 +115,19 @@ class Player(object):
             return None
         else:
             return r["id"]
+
+
+    def get_career_stats(self):
+        print("Getting career stats")
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36'
+        }
+        r = requests.get('http://stats.nba.com/stats/playercareerstats?LeagueID=00&PerMode=PerGame&PlayerID=' + str(self.playerID), headers=headers)
+        try:
+            r = r.json()
+            results = r["resultSets"][1]
+            print(results)
+
+        except ValueError:
+            print("Error extracting the JSON")
+            print(r)

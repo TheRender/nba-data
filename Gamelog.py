@@ -9,7 +9,6 @@ import requests
 
 class Gamelog(object):
 
-
     def __init__(self, date, location, teamID, gameOpponent, opponentTeamID, score, minutes, points, rebounds, assists, steals, blocks, fieldGoalsMade, fieldGoalsAttempted, fieldGoalPercentage, threePointsMade, threePointsAttempted, threePointsPercentage, freeThrowsMade, freeThrowsAttempted, freeThrowsPercentage, fouls, plusMinus):
         self.date = date
         self.location = location

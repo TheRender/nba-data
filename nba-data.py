@@ -10,6 +10,10 @@ from Team import Team
 from Gamelog import Gamelog
 import datetime
 
+# @type :: VAR
+# @name :: teams
+# @description :: Main global variable to hold teams
+# @end
 teams = {}
 
 # @type :: FUNC
@@ -67,6 +71,10 @@ def upload_teams():
         value.upload()
 
 
+# @type :: FUNC
+# @name :: get_current_games
+# @description :: gets the current games of the day, and uploads them
+# @end
 def get_current_games():
     print("Getting current games")
     date = "20170207"
