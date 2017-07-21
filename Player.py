@@ -125,9 +125,13 @@ class Player(object):
         r = requests.get('http://stats.nba.com/stats/playercareerstats?LeagueID=00&PerMode=PerGame&PlayerID=' + str(self.playerID), headers=headers)
         try:
             r = r.json()
-            results = r["resultSets"][1]
-            print(results)
-
+            results = r["resultSets"][1]["rowSet"][0]
+            self.careerPPG = results[23]
+            self.careerRPG = results[17]
+            self.careerAPG = results[18]
         except ValueError:
             print("Error extracting the JSON")
             print(r)
+        except IndexError:
+            print("The NBA is being stupid and messed up their API")
+            print("Index error out of bounds somewhere")

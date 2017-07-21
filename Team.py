@@ -24,9 +24,9 @@ class Team(object):
     # @param :: seasonWins = number of season wins
     # @param :: seasonLosses - number of season losses
     # @param :: location - the location that the team is in
-    # @param :: logs - an array of log id's in association with our API
+    # @param :: games - an array of games id's in association with our API
     # @end
-    def __init__(self, name, city, tricode, teamID, players, logo, nickname, seasonWins, seasonLosses, location, logs):
+    def __init__(self, name, city, tricode, teamID, players, logo, nickname, seasonWins, seasonLosses, location, games):
         # self.id = apiID
         self.name = name
         self.city = city
@@ -37,7 +37,7 @@ class Team(object):
         self.seasonWins = seasonWins
         self.seasonLosses = seasonLosses
         self.location = location
-        self.logs = logs
+        self.games = games
         self.nickname = nickname
         # Try to get an ID
         result = self.get_api_id()
