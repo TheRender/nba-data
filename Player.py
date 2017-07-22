@@ -139,7 +139,7 @@ class Player(object):
             self.careerRPG = results[17]
             self.careerAPG = results[18]
             return
-        except requests.Exceptions.Timeout, e:
+        except requests.exceptions.Timeout, e:
             logging.error("Timeout")
             logging.error(e)
             logging.error("Trying again")
