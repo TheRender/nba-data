@@ -6,8 +6,13 @@
 
 import json
 import requests
+import logging
+from multiprocessing.dummy import Pool as ThreadPool
 
 from Player import Player
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Team(object):
 
@@ -28,6 +33,7 @@ class Team(object):
     # @end
     def __init__(self, name, city, tricode, teamID, players, logo, nickname, seasonWins, seasonLosses, location, games):
         # self.id = apiID
+        logger.info("Creating team object: " + name)
         self.name = name
         self.city = city
         self.tricode = tricode
@@ -49,6 +55,7 @@ class Team(object):
     # @param :: self - self representation
     # @description :: Determines and executes whether to upload with our without api id
     def upload(self):
+        logger.info("Uploading: " + self.name)
         if hasattr(self, "id"):
             self.upload_existing()
         else:
@@ -72,6 +79,7 @@ class Team(object):
     # @description :: Uploads a new team
     # @end
     def upload_new(self):
+        logger.info("Uploading new: " + self.name)
         r = requests.post('https://therender-nba-api.herokuapp.com/team/new', data=self.json_dump())
         print(r)
 
@@ -81,6 +89,7 @@ class Team(object):
     # @description :: Uploads an existing team as an edit
     # @end
     def upload_existing(self):
+        logger.info("Uploading existing: " + self.name)
         r = requests.post('https://therender-nba-api.herokuapp.com/team/edit', data=self.json_dump())
 
     # @type :: FUNC
@@ -104,21 +113,36 @@ class Team(object):
     # @description :: Retrieves and creates player objects for this team
     # @end
     def get_players(self):
-        print("API Call")
-        print(self.teamID)
-        print('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + self.teamID)
+        logger.info("Getting players: " + self.name + ", " + str(self.teamID))
+        logger.info('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + str(self.teamID))
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36',
+            'Connection':'keep-alive'
         }
-        r = requests.get('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + self.teamID, headers=headers)
-        r = r.json()
-        print("API Finished")
-        rowSet = r["resultSets"][0]["rowSet"]
-        playerObjects = []
-        for x in rowSet:
-            headshotURL = "http://stats.nba.com/media/players/230x185/" + str(x[12]) + ".png"
-            print(headshotURL)
-            player = Player(x[12], x[3], headshotURL, self.name, self.id, x[4], x[5], 0, 0, 0, [])
-            print(player.json_dump())
-            player.upload()
-            self.players.append(player.id)
+        try:
+            r = requests.get('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + str(self.teamID), headers=headers, timeout=3)
+            r = r.json()
+            logger.info("NBA API request complete")
+            rowSet = r["resultSets"][0]["rowSet"]
+            playerObjects = []
+            for x in rowSet:
+                headshotURL = "http://stats.nba.com/media/players/230x185/" + str(x[12]) + ".png"
+                playerObjects.append((Player(x[12], x[3], headshotURL, self.name, self.id, x[4], x[5], 0, 0, 0, [])))
+                # y.upload()
+
+            # Use a pool to map over the playerObjects
+            p = ThreadPool(16)
+            p.map(self.parallel_upload, playerObjects)
+            p.close()
+            p.join()
+            return
+        except requests.exceptions.Timeout, e:
+            logging.error("Timeout")
+            logging.error(e)
+            logging.error("Try again")
+            self.get_players()
+
+    def parallel_upload(self, player):
+        print("Uploading player: " + player.name)
+        player.upload()
+        self.players.append(player.id)

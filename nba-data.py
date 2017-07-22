@@ -9,6 +9,12 @@ import json
 from Team import Team
 from Gamelog import Gamelog
 import datetime
+from multiprocessing.dummy import Pool as ThreadPool
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 # @type :: VAR
 # @name :: teams
@@ -21,10 +27,13 @@ teams = {}
 # @description :: The main delegate function that calls other api functions for teams
 # @end
 def team_api():
+    logger.info("Starting teams")
     populate_team_basic()
     populate_team_season_record()
     # get_current_games()
     upload_teams()
+    p.close()
+    p.join()
 
 # @type :: FUNC
 # @name :: populate_team_basic
@@ -53,23 +62,40 @@ def populate_team_season_record():
     combined = east + west
     for x in combined:
         tID = x["teamId"]
-        print(tID in teams.keys())
         if tID in teams.keys():
             team = teams[tID]
             team.seasonWins = x["win"]
             team.seasonLosses = x["loss"]
             teams[tID] = team
 
+
+p = ThreadPool(16)
+
 # @type :: FUNC
 # @name :: upload_teams
 # @description :: Uploads all of the teams
 # @end
 def upload_teams():
+    logger.info("Uploading teams")
+    teamsList = []
     for key, value in teams.iteritems():
-        value.upload()
-        value.get_players()
-        value.upload()
+        teamsList.append(value)
+    # p = ThreadPool(16)
+    p.map(upload_helper, teamsList)
+    # p.close()
+    # p.join()
+    for x in teamsList:
+        x.get_players()
+    # p = ThreadPool(16)
+    p.map(upload_helper, teamsList)
+    # p.close()
+    # p.join()
+    # value.upload()
+    # value.upload()
 
+def upload_helper(x):
+    logger.info("Uploading: " + x.name)
+    x.upload()
 
 # @type :: FUNC
 # @name :: get_current_games
@@ -124,4 +150,5 @@ def get_current_date():
 
 if __name__ == '__main__':
     # We going to do some shit here
+    logger.info("Enter")
     team_api()
