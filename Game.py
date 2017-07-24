@@ -34,6 +34,7 @@ class Game(object):
     # @param :: awayPlayers - The array of away players
     def __init__(self, date, gameID, startTime, clock, quarter, isBuzzerBeater, isHalfTime, homeTeamScore, homeTeamID, homeTriCode, awayTeamScore, awayTeamID, awayTriCode):
         logger.info("Creating game: " + str(gameID))
+        # TODO :: Convert teamID's to our db ID's
         self.date = date
         self.gameID = gameID
         self.startTime = startTime
@@ -50,6 +51,7 @@ class Game(object):
         self.homePlayers = []
         self.awayPlayers = []
         # Try to get an ID
+        self.get_player_logs()
         result = self.get_api_id()
         if result != None:
             self.id = result
@@ -110,3 +112,33 @@ class Game(object):
             return None
         else:
             return r["id"]
+
+    def get_player_logs(self):
+        logger.info("Getting player logs: " + str(self.gameID))
+        r = requests.get('http://data.nba.com/data/10s/v2015/json/mobile_teams/nba/2016/scores/gamedetail/' + self.gameID + '_gamedetail.json')
+        r = r.json()
+        game = r["g"]
+        visitingData = game["vls"]["pstsg"]
+        homeData = game["hls"]["pstsg"]
+        for player in visitingData:
+            pid = get_player_id(player["pid"])
+            self.awayPlayers.append(pid)
+        for player in homeData:
+            pid = get_player_id(player["pid"])
+            self.homePlayers.append(pid)
+
+
+# @type :: FUNC
+# @name :: get_player_id
+# @param :: nbaID - the player nbaid to look up
+# @description :: Check and return the player's db
+# @return :: None or string id
+# @end
+def get_player_id(nbaID):
+    logger.info("Getting player ID: " + str(nbaID))
+    r = requests.get('https://nba-api.therendersports.com/player/exists/nbaID/' + str(nbaID))
+    r = r.json()
+    if r["exists"] is True:
+        return r["id"]
+    else:
+        return None
