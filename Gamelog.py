@@ -6,16 +6,16 @@
 
 import json
 import requests
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Gamelog(object):
 
-    def __init__(self, date, location, teamID, gameOpponent, opponentTeamID, score, minutes, points, rebounds, assists, steals, blocks, fieldGoalsMade, fieldGoalsAttempted, fieldGoalPercentage, threePointsMade, threePointsAttempted, threePointsPercentage, freeThrowsMade, freeThrowsAttempted, freeThrowsPercentage, fouls, plusMinus):
-        self.date = date
-        self.location = location
-        self.teamID = teamID
-        self.gameOpponent = gameOpponent
-        self.opponentTeamID = opponentTeamID
-        self.score = score
+    def __init__(self, playerID, gameID, minutes, points, rebounds, assists, steals, blocks, fieldGoalsMade, fieldGoalsAttempted, fieldGoalPercentage, threePointsMade, threePointsAttempted, threePointsPercentage, freeThrowsMade, freeThrowsAttempted, freeThrowsPercentage, fouls, plusMinus):
+        self.playerID = playerID
+        self.gameID = gameID
         self.minutes = minutes
         self.points = points
         self.rebounds = rebounds
@@ -33,7 +33,6 @@ class Gamelog(object):
         self.freeThrowsPercentage = freeThrowsPercentage
         self.fouls = fouls
         self.plusMinus = plusMinus
-        self.upload()
 
     # @type :: FUNC
     # @name :: json_dump
@@ -50,11 +49,10 @@ class Gamelog(object):
     # @param :: self - self representation
     # @description :: Determines and executes whether to upload with our without api id
     def upload(self):
+        logger.info("Uploading gamelog: " + str(self.playerID))
         if hasattr(self, "id"):
-            print("OLD")
             self.upload_existing()
         else:
-            print("NEW")
             self.upload_new()
             result = self.get_api_id()
             if result != None:
@@ -85,7 +83,7 @@ class Gamelog(object):
     # supplies the API id
     # @end
     def get_api_id(self):
-        r = requests.get('https://therender-nba-api.herokuapp.com/gamelog/exists/nbaid/' + self.teamID)
+        r = requests.get('https://therender-nba-api.herokuapp.com/gamelog/exists/nbaid/' + str(self.gameID) + '/' + str(self.playerID))
         r = r.json()
         print(r)
         if r["exists"] == False:

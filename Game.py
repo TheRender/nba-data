@@ -7,9 +7,14 @@
 import json
 import requests
 import logging
+from multiprocessing.dummy import Pool as ThreadPool
 
-logging.basicConfig(level=logging.INFO)
+from Gamelog import Gamelog
+
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+p = ThreadPool(16)
 
 class Game(object):
 
@@ -55,6 +60,14 @@ class Game(object):
         result = self.get_api_id()
         if result != None:
             self.id = result
+        # Try to get a home team ID
+        tempHomeID = get_team_id(self.homeTeamID)
+        if tempHomeID != None:
+            self.homeTeamID = tempHomeID
+        # Try to get away team ID
+        tempAwayID = get_team_id(self.awayTeamScore)
+        if tempAwayID != None:
+            self.awayTeamID = tempAwayID
 
     # @type :: FUNC
     # @name :: upload
@@ -106,7 +119,11 @@ class Game(object):
     # supplies the API id
     # @end
     def get_api_id(self):
-        r = requests.get('https://therender-nba-api.herokuapp.com/game/exists/nbaid/' + self.gameID)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36',
+            'Connection':'keep-alive'
+        }
+        r = requests.get('https://therender-nba-api.herokuapp.com/game/exists/nbaid/' + self.gameID, headers=headers)
         r = r.json()
         if r["exists"] == False:
             return None
@@ -115,28 +132,105 @@ class Game(object):
 
     def get_player_logs(self):
         logger.info("Getting player logs: " + str(self.gameID))
-        r = requests.get('http://data.nba.com/data/10s/v2015/json/mobile_teams/nba/2016/scores/gamedetail/' + self.gameID + '_gamedetail.json')
-        r = r.json()
-        game = r["g"]
-        visitingData = game["vls"]["pstsg"]
-        homeData = game["hls"]["pstsg"]
-        for player in visitingData:
-            pid = get_player_id(player["pid"])
-            self.awayPlayers.append(pid)
-        for player in homeData:
-            pid = get_player_id(player["pid"])
-            self.homePlayers.append(pid)
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36',
+                'Connection':'keep-alive'
+            }
+            r = requests.get('http://data.nba.com/data/10s/v2015/json/mobile_teams/nba/2016/scores/gamedetail/' + self.gameID + '_gamedetail.json', headers=headers)
+
+            r = r.json()
+            game = r["g"]
+            visitingData = game["vls"]["pstsg"]
+            homeData = game["hls"]["pstsg"]
+            for player in visitingData:
+                pid = get_player_id(player["pid"])
+                self.awayPlayers.append(pid)
+            for player in homeData:
+                pid = get_player_id(player["pid"])
+                self.homePlayers.append(pid)
+            allData = homeData + visitingData
+            p.map(self.create_game, allData)
+            p.close()
+            p.join()
+        except ValueError, e:
+            logger.error("JSON came back empty")
+            logger.error(e)
+            logger.error(str(self.gameID))
+
+
+
+    def create_game(self, player):
+        tempID = get_player_id(player["pid"])
+        if tempID != None:
+            playerID = tempID
+        else:
+            logger.error("No playerID")
+            return
+        playerID = get_player_id(player["pid"])
+        logger.info("Creating gamelog for: " + str(playerID))
+        gameID = self.gameID
+        minutes = str(player["min"]) + ":" + str(player["sec"])
+        points = player["pts"]
+        rebounds = player["reb"]
+        assists = player["ast"]
+        steals = player["stl"]
+        blocks = player["blk"]
+        fieldGoalsMade = int(player["fgm"])
+        fieldGoalsAttempted = int(player["fga"])
+        if fieldGoalsMade is 0 or fieldGoalsAttempted is 0:
+            fieldGoalPercentage = 0
+        else:
+            fieldGoalPercentage = fieldGoalsMade / fieldGoalsAttempted
+        threePointsMade = int(player["tpm"])
+        threePointsAttempted = int(player["tpa"])
+        if threePointsMade is 0 or threePointsAttempted is 0:
+            threePointsPercentage = 0
+        else:
+            threePointsPercentage = threePointsMade / threePointsAttempted
+        freeThrowsMade = int(player["ftm"])
+        freeThrowsAttempted = int(player["fta"])
+        if freeThrowsMade is 0 or freeThrowsAttempted is 0:
+            freeThrowsPercentage = 0
+        else:
+            freeThrowsPercentage = freeThrowsMade / freeThrowsAttempted
+        fouls = int(player["pf"])
+        plusMinus = int(player["pm"])
+        log = Gamelog(playerID, gameID, minutes, points, rebounds, assists, steals, blocks, fieldGoalsMade, fieldGoalsAttempted, fieldGoalPercentage, threePointsMade, threePointsAttempted, threePointsPercentage, freeThrowsMade, freeThrowsAttempted, freeThrowsPercentage, fouls, plusMinus)
+        log.upload()
+
+
 
 
 # @type :: FUNC
 # @name :: get_player_id
 # @param :: nbaID - the player nbaid to look up
-# @description :: Check and return the player's db
+# @description :: Check and return the player's db id
 # @return :: None or string id
 # @end
 def get_player_id(nbaID):
+    # TODO :: ERROR HERE.  Make a try then just loop until we get a result
     logger.info("Getting player ID: " + str(nbaID))
-    r = requests.get('https://nba-api.therendersports.com/player/exists/nbaID/' + str(nbaID))
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36',
+        'Connection':'keep-alive'
+    }
+    r = requests.get('https://nba-api.therendersports.com/player/exists/nbaID/' + str(nbaID), headers=headers)
+    r = r.json()
+    if r["exists"] is True:
+        return r["id"]
+    else:
+        return None
+
+# @type :: FUNC
+# @name :: get_team_id
+# @param :: nbaID - the team nbaid to look up
+# @description :: Check and return the team's db id
+# @return :: None or string id
+# @end
+def get_team_id(nbaID):
+    logger.info("Getting team ID: " + str(nbaID))
+    r = requests.get('https://nba-api.therenderports.com/team/exists/nbaID/' + str(nbaID))
     r = r.json()
     if r["exists"] is True:
         return r["id"]
