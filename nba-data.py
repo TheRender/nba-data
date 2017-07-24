@@ -8,6 +8,7 @@ import requests
 import json
 from Team import Team
 from Gamelog import Gamelog
+from Game import Game
 import datetime
 from multiprocessing.dummy import Pool as ThreadPool
 import logging
@@ -30,7 +31,7 @@ def team_api():
     logger.info("Starting teams")
     populate_team_basic()
     populate_team_season_record()
-    # get_current_games()
+    get_current_games()
     upload_teams()
     p.close()
     p.join()
@@ -80,18 +81,10 @@ def upload_teams():
     teamsList = []
     for key, value in teams.iteritems():
         teamsList.append(value)
-    # p = ThreadPool(16)
     p.map(upload_helper, teamsList)
-    # p.close()
-    # p.join()
     for x in teamsList:
         x.get_players()
-    # p = ThreadPool(16)
     p.map(upload_helper, teamsList)
-    # p.close()
-    # p.join()
-    # value.upload()
-    # value.upload()
 
 def upload_helper(x):
     logger.info("Uploading: " + x.name)
@@ -102,27 +95,20 @@ def upload_helper(x):
 # @description :: gets the current games of the day, and uploads them
 # @end
 def get_current_games():
-    print("Getting current games")
+    logger.info("Getting current games")
     date = "20170207"
     # date = get_current_date_nba()
     r = requests.get("http://data.nba.net/data/10s/prod/v1/" + date + "/scoreboard.json")
     r = r.json()
     nbaGames = r["games"]
+    games = []
     for x in nbaGames:
-        print(x)
-        gameID = x["gameId"]
-        visitingTeam = x["vTeam"]
-        homeTeam = x["hTeam"]
-        minutes = int(x["gameDuration"]["hours"]) * 60 + int(x["gameDuration"]["minutes"])
-        score = homeTeam["score"] + "-" + visitingTeam["score"]
-        log1 = Gamelog(get_current_date(), "", homeTeam["teamId"], "", visitingTeam["teamId"], score, str(minutes), homeTeam["score"], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        log2 = Gamelog(get_current_date(), "", visitingTeam["teamId"], "", homeTeam["teamId"], score, str(minutes), visitingTeam["score"], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        id1 = log1.teamID
-        id2 = log2.teamID
-        if id1 in teams.keys():
-            teams[id1].logs.append(log1.id)
-        if id2 in teams.keys():
-            teams[id2].logs.append(log2.id)
+        logger.info("Game: " + x["gameId"])
+        games.append(Game(get_current_date(), x["gameId"], x["startTimeUTC"], x["clock"], x["period"]["current"], x["isBuzzerBeater"], x["period"]["isHalftime"], x["hTeam"]["score"], x["hTeam"]["teamId"], x["hTeam"]["triCode"], x["vTeam"]["score"], x["vTeam"]["teamId"], x["vTeam"]["triCode"]))
+    p.map(upload_game, games)
+
+def upload_game(game):
+    game.upload()
 
 # @type :: FUNC
 # @name :: get_current_date_nba
