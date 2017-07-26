@@ -55,6 +55,10 @@ class Game(object):
         self.awayTriCode = awayTriCode
         self.homePlayers = []
         self.awayPlayers = []
+
+        logger.debug("Home teamID: " + str(self.homeTeamID))
+        logger.debug("Away teamID: " + str(self.awayTeamID))
+
         # Try to get an ID
         self.get_player_logs()
         result = self.get_api_id()
@@ -64,10 +68,16 @@ class Game(object):
         tempHomeID = get_team_id(self.homeTeamID)
         if tempHomeID != None:
             self.homeTeamID = tempHomeID
+        else:
+            logger.error("Could not get home team id: " + str(self.homeTeamID))
         # Try to get away team ID
-        tempAwayID = get_team_id(self.awayTeamScore)
+        tempAwayID = get_team_id(self.awayTeamID)
         if tempAwayID != None:
             self.awayTeamID = tempAwayID
+        else:
+            logger.error("Could not get away team id: " + str(self.awayTeamID))
+        logger.info("HomeID: " + str(self.homeTeamID))
+        logger.info("AwayID: " + str(self.awayTeamID))
 
     # @type :: FUNC
     # @name :: upload
@@ -100,6 +110,7 @@ class Game(object):
     def upload_new(self):
         logger.info("Uploading new: " + str(self.gameID))
         r = requests.post('https://therender-nba-api.herokuapp.com/game/new', data=self.json_dump())
+        logger.debug(r)
 
     # @type :: FUNC
     # @name :: upload_existing
@@ -149,8 +160,6 @@ class Game(object):
                 self.homePlayers.append(pid)
             allData = homeData + visitingData
             p.map(self.create_game, allData)
-            p.close()
-            p.join()
         except ValueError, e:
             logger.error("JSON came back empty")
             logger.error(e)
@@ -158,6 +167,7 @@ class Game(object):
 
     def create_game(self, player):
         tempID = get_player_id(player["pid"])
+        logger.debug(tempID)
         if tempID != None:
             playerID = tempID
         else:
@@ -238,6 +248,8 @@ def get_team_id(nbaID):
     r = requests.get('https://therender-nba-api.herokuapp.com/team/exists/nbaID/' + str(nbaID))
     r = r.json()
     if r["exists"] is True:
+        logging.info("Team exists")
         return r["id"]
     else:
+        logger.error("TEAM ID does not exist: " + str(nbaID))
         return None

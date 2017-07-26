@@ -42,11 +42,17 @@ def team_api():
 # @description :: Populates basic information about teams
 # @end
 def populate_team_basic():
-    r = requests.get('http://data.nba.net/data/10s/prod/v1/2017/teams.json')
-    r = r.json()
-    league = r["league"]
-    standardArray = league["standard"]
-    p.map(configure_team, standardArray)
+    try:
+        r = requests.get('http://data.nba.net/data/10s/prod/v1/2017/teams.json')
+        r = r.json()
+        league = r["league"]
+        standardArray = league["standard"]
+        p.map(configure_team, standardArray)
+    except ValueError, e:
+        logger.error("Could not decode JSON object")
+        logger.error(e)
+        logger.error("Retrying")
+        populate_team_basic()
 
 
 def configure_team(t):
@@ -105,10 +111,14 @@ def get_current_games():
     games = []
     for x in nbaGames:
         logger.info("Game: " + x["gameId"])
-        games.append(Game(get_current_date(), x["gameId"], x["startTimeUTC"], x["clock"], x["period"]["current"], x["isBuzzerBeater"], x["period"]["isHalftime"], x["hTeam"]["score"], x["hTeam"]["teamId"], x["hTeam"]["triCode"], x["vTeam"]["score"], x["vTeam"]["teamId"], x["vTeam"]["triCode"]))
+        visitingTeamID = x["vTeam"]["teamId"]
+        homeTeamID = x["hTeam"]["teamId"]
+        logging.info("GAME ID's: " + str(homeTeamID) + " , " + str(visitingTeamID))
+        games.append(Game(get_current_date(), x["gameId"], x["startTimeUTC"], x["clock"], x["period"]["current"], x["isBuzzerBeater"], x["period"]["isHalftime"], x["hTeam"]["score"], homeTeamID, x["hTeam"]["triCode"], x["vTeam"]["score"], visitingTeamID, x["vTeam"]["triCode"]))
     p.map(upload_game, games)
 
 def upload_game(game):
+    logger.info("Uploading game: " + str(game.gameID))
     game.upload()
 
 # @type :: FUNC

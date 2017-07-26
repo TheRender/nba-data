@@ -85,6 +85,8 @@ class Gamelog(object):
         r = requests.get('https://therender-nba-api.herokuapp.com/gamelog/exists/nbaid/' + str(self.gameID) + '/' + str(self.playerID))
         r = r.json()
         if r["exists"] == False:
+            logger.info("Gamelog does not exist... Creating")
+            logger.info("https://therender-nba-api.herokuapp.com/gamelog/exists/nbaid/" + str(self.gameID) + "/" + str(self.playerID))
             return None
         else:
             return r["id"]
