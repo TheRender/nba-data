@@ -65,7 +65,6 @@ class Gamelog(object):
     # @end
     def upload_new(self):
         r = requests.post('https://therender-nba-api.herokuapp.com/gamelog/new', data=self.json_dump())
-        print(r)
 
     # @type :: FUNC
     # @name :: upload_existing
@@ -85,7 +84,6 @@ class Gamelog(object):
     def get_api_id(self):
         r = requests.get('https://therender-nba-api.herokuapp.com/gamelog/exists/nbaid/' + str(self.gameID) + '/' + str(self.playerID))
         r = r.json()
-        print(r)
         if r["exists"] == False:
             return None
         else:

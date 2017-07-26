@@ -16,6 +16,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+p = ThreadPool(16)
 
 # @type :: VAR
 # @name :: teams
@@ -31,8 +32,8 @@ def team_api():
     logger.info("Starting teams")
     populate_team_basic()
     populate_team_season_record()
-    get_current_games()
     upload_teams()
+    get_current_games()
     p.close()
     p.join()
 
@@ -45,10 +46,13 @@ def populate_team_basic():
     r = r.json()
     league = r["league"]
     standardArray = league["standard"]
-    for t in standardArray:
-        logo = "http://stats.nba.com/media/img/teams/logos/" + t["teamId"] + "_logo.svg"
-        team = Team(t["fullName"], t["city"], t["tricode"], t["teamId"], [], logo, t["nickname"], 0, 0, t["confName"], [])
-        teams[team.teamID] = team
+    p.map(configure_team, standardArray)
+
+
+def configure_team(t):
+    logo = "http://stats.nba.com/media/img/teams/logos/" + t["teamId"] + "_logo.svg"
+    team = Team(t["fullName"], t["city"], t["tricode"], t["teamId"], [], logo, t["nickname"], 0, 0, t["confName"], [])
+    teams[team.teamID] = team
 
 # @type :: FUNC
 # @name :: populate_team_season_record
@@ -68,9 +72,6 @@ def populate_team_season_record():
             team.seasonWins = x["win"]
             team.seasonLosses = x["loss"]
             teams[tID] = team
-
-
-p = ThreadPool(16)
 
 # @type :: FUNC
 # @name :: upload_teams

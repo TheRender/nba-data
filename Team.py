@@ -81,7 +81,6 @@ class Team(object):
     def upload_new(self):
         logger.info("Uploading new: " + self.name)
         r = requests.post('https://therender-nba-api.herokuapp.com/team/new', data=self.json_dump())
-        print(r)
 
     # @type :: FUNC
     # @name :: upload_existing

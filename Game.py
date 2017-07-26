@@ -100,7 +100,6 @@ class Game(object):
     def upload_new(self):
         logger.info("Uploading new: " + str(self.gameID))
         r = requests.post('https://therender-nba-api.herokuapp.com/game/new', data=self.json_dump())
-        print(r)
 
     # @type :: FUNC
     # @name :: upload_existing
@@ -138,7 +137,6 @@ class Game(object):
                 'Connection':'keep-alive'
             }
             r = requests.get('http://data.nba.com/data/10s/v2015/json/mobile_teams/nba/2016/scores/gamedetail/' + self.gameID + '_gamedetail.json', headers=headers)
-
             r = r.json()
             game = r["g"]
             visitingData = game["vls"]["pstsg"]
@@ -157,8 +155,6 @@ class Game(object):
             logger.error("JSON came back empty")
             logger.error(e)
             logger.error(str(self.gameID))
-
-
 
     def create_game(self, player):
         tempID = get_player_id(player["pid"])
@@ -196,7 +192,9 @@ class Game(object):
             freeThrowsPercentage = freeThrowsMade / freeThrowsAttempted
         fouls = int(player["pf"])
         plusMinus = int(player["pm"])
+
         log = Gamelog(playerID, gameID, minutes, points, rebounds, assists, steals, blocks, fieldGoalsMade, fieldGoalsAttempted, fieldGoalPercentage, threePointsMade, threePointsAttempted, threePointsPercentage, freeThrowsMade, freeThrowsAttempted, freeThrowsPercentage, fouls, plusMinus)
+
         log.upload()
 
 
@@ -215,12 +213,19 @@ def get_player_id(nbaID):
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36',
         'Connection':'keep-alive'
     }
-    r = requests.get('https://nba-api.therendersports.com/player/exists/nbaID/' + str(nbaID), headers=headers)
-    r = r.json()
-    if r["exists"] is True:
-        return r["id"]
-    else:
-        return None
+    try:
+        r = requests.get('https://therender-nba-api.herokuapp.com/player/exists/nbaID/' + str(nbaID), headers=headers)
+        r = r.json()
+        if r["exists"] is True:
+            return r["id"]
+        else:
+            return None
+    except ConnectionError, e:
+        logging.error("Connection Error")
+        logging.error(e)
+        logging.error("Retrying")
+        return get_player_id(nbaID)
+
 
 # @type :: FUNC
 # @name :: get_team_id
@@ -230,7 +235,7 @@ def get_player_id(nbaID):
 # @end
 def get_team_id(nbaID):
     logger.info("Getting team ID: " + str(nbaID))
-    r = requests.get('https://nba-api.therenderports.com/team/exists/nbaID/' + str(nbaID))
+    r = requests.get('https://therender-nba-api.herokuapp.com/team/exists/nbaID/' + str(nbaID))
     r = r.json()
     if r["exists"] is True:
         return r["id"]

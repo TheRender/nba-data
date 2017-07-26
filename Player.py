@@ -150,3 +150,8 @@ class Player(object):
         except IndexError:
             logger.error("The NBA is being stupid and messed up their API")
             logger.error("Index error out of bounds somewhere")
+        except ConnectionError:
+            logging.error("Connection Error")
+            logging.error(e)
+            logging.error("Trying again")
+            self.get_career_stats()
