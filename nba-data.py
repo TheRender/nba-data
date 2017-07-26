@@ -56,7 +56,7 @@ def populate_team_basic():
 
 
 def configure_team(t):
-    logo = "http://stats.nba.com/media/img/teams/logos/" + t["teamId"] + "_logo.svg"
+    logo = "http://stats.nba.com/media/img/teams/logos/" + t["tricode"] + "_logo.svg"
     team = Team(t["fullName"], t["city"], t["tricode"], t["teamId"], [], logo, t["nickname"], 0, 0, t["confName"], [])
     teams[team.teamID] = team
 
@@ -103,7 +103,8 @@ def upload_helper(x):
 # @end
 def get_current_games():
     logger.info("Getting current games")
-    date = "20170207"
+    # date = "20170207"
+    date = "20161118"
     # date = get_current_date_nba()
     r = requests.get("http://data.nba.net/data/10s/prod/v1/" + date + "/scoreboard.json")
     r = r.json()
