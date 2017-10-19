@@ -147,7 +147,7 @@ class Game(object):
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36',
                 'Connection':'keep-alive'
             }
-            r = requests.get('http://data.nba.com/data/10s/v2015/json/mobile_teams/nba/2016/scores/gamedetail/' + self.gameID + '_gamedetail.json', headers=headers)
+            r = requests.get('http://data.nba.com/data/10s/v2015/json/mobile_teams/nba/2017/scores/gamedetail/' + self.gameID + '_gamedetail.json', headers=headers)
             r = r.json()
             game = r["g"]
             visitingData = game["vls"]["pstsg"]
