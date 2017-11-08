@@ -53,10 +53,13 @@ class Gamelog(object):
         if hasattr(self, "id"):
             self.upload_existing()
         else:
-            self.upload_new()
             result = self.get_api_id()
             if result != None:
                 self.id = result
+                self.upload_existing()
+            else:
+                self.upload_new()
+
 
     # @type :: FUNC
     # @name :: upload_new
@@ -89,4 +92,5 @@ class Gamelog(object):
             logger.info("https://therender-nba-api.herokuapp.com/gamelog/exists/nbaid/" + str(self.gameID) + "/" + str(self.playerID))
             return None
         else:
+            logger.info("ID exists: " + str(r["id"]))
             return r["id"]

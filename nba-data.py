@@ -104,8 +104,8 @@ def upload_helper(x):
 def get_current_games():
     logger.info("Getting current games")
     # date = "20170207"
-    date = "20161118"
-    # date = get_current_date_nba()
+    # date = "20161118"
+    date = get_current_date_nba()
     r = requests.get("http://data.nba.net/data/10s/prod/v1/" + date + "/scoreboard.json")
     r = r.json()
     nbaGames = r["games"]
