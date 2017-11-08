@@ -14,6 +14,8 @@ from Player import Player
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+season = "2017-18"
+
 class Team(object):
 
     # @type :: FUNC
@@ -113,13 +115,13 @@ class Team(object):
     # @end
     def get_players(self):
         logger.info("Getting players: " + self.name + ", " + str(self.teamID))
-        logger.info('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + str(self.teamID))
+        logger.info('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=" + season + "&TeamID=' + str(self.teamID))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.66 Safari/537.36',
             'Connection':'keep-alive'
         }
         try:
-            r = requests.get('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=2016-17&TeamID=' + str(self.teamID), headers=headers, timeout=3)
+            r = requests.get('http://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=" + season + "&TeamID=' + str(self.teamID), headers=headers, timeout=3)
             r = r.json()
             logger.info("NBA API request complete")
             rowSet = r["resultSets"][0]["rowSet"]
